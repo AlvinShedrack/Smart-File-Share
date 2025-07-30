@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📡 Smart File Share</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(to bottom right, #e8f0ff, #ffffff);
+      color: #333;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+    }
+        footer {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 0.9rem;
+      color: #4B0082;
+      margin-top: 20px;
+    }
+    header h1 {
+      font-size: 2rem;
+      margin: 0;
+      color: #0077cc;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 1rem;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+      padding: 1.5rem;
+      margin-top: 1rem;
+      display: none;
+      transition: all 0.3s ease-in-out;
+    }
+    .card.visible {
+      display: block;
+    }
+    .toggle-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .toggle-buttons button {
+      padding: 12px 20px;
+      font-size: 1rem;
+      background: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+    }
+    .toggle-buttons button:hover {
+      background: #005fa3;
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #0077cc;
+      text-align: center;
+    }
+    input[type="file"] {
+      margin: 1rem 0;
+      padding: 0.8rem;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+    button[type="submit"], .upload-btn {
+      width: 100%;
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 0.9rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+    }
+    button:hover {
+      background: #1e7e34;
+    }
+    .qrcode-container {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .qrcode-container a {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: #0077cc;
+      word-break: break-word;
+      text-align: center;
+    }
+    #uploadStatus {
+      margin-top: 1rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    .desktop-only {
+      display: block;
+    }
+    .mobile-only {
+      display: none;
+    }
+    .laptop-btn {
+      display: inline-block;
+    }
+    @media (max-width: 768px) {
+      .desktop-only {
+        display: none;
+      }
+      .mobile-only {
+        display: block;
+      }
+      .toggle-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .toggle-buttons button {
+        width: 100%;
+      }
+      .laptop-btn {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📡 Smart File Share</h1>
+  <p style="color: #444; font-size: 1rem;">Seamless transfers between your Laptop and Phone</p>
+</header>
+
+<div class="container">
+  <div class="toggle-buttons">
+    <button class="laptop-btn" onclick="toggleSection('laptopCard')">📤 Laptop → Phone</button>
+    <button onclick="toggleSection('PhoneCard')">📥 Phone → Laptop</button>
+  </div>
+
+  <!-- Laptop to Phone -->
+  <div class="card" id="laptopCard">
+    <h2>📤 Send File to Phone</h2>
+    <input type="file" id="fileInput" />
+    <button class="upload-btn mobile-only" onclick="uploadFile()">Upload & Generate QR</button>
+
+    <div id="result" style="display: none;">
+      <div class="qrcode-container">
+        <p>Scan this QR code on your Phone:</p>
+        <div id="qrcode" class="desktop-only"></div>
+        <a id="downloadLink" target="_blank"></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phone to Laptop -->
+  <div class="card" id="PhoneCard">
+    <h2 id="PhoneHeading">📥 Receive File from Phone</h2>
+
+<div class="qrcode-container desktop-only">
+
+  <div style="text-align: center;">
+      <p>Scan to open this page:</p>
+      <div id="initialQr" style="display: inline-block;"></div>
+  </div>
+</div>
+
+
+    <form id="uploadForm" enctype="multipart/form-data">
+      <div class="mobile-only">
+        <input type="file" name="file" required />
+        <button type="submit">Upload to Laptop</button>
+      </div>
+    </form>
+
+    <p id="uploadStatus"></p>
+
+    <div id="phoneQrContainer" style="display: none;">
+      <div class="qrcode-container desktop-only">
+        <p>QR for uploaded file:</p>
+        <div id="phoneQr"></div>
+        <a id="phoneQrLink" target="_blank"></a>
+      </div>
+    </div>
+  </div>
+</div>
+<footer>
+    Created by <strong>Alvin Shedrack</strong> © 2025
+  </footer>
+<script>
+  function toggleSection(sectionId) {
+    document.getElementById("laptopCard").classList.remove("visible");
+    document.getElementById("PhoneCard").classList.remove("visible");
+    document.getElementById(sectionId).classList.add("visible");
+  }
+
+  // Generate initial QR code
+  new QRCode(document.getElementById("initialQr"), "http://192.168.100.140:5000/");
+
+  function uploadFile() {
+    const fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+    if (!file) return alert("Please choose a file");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch("/upload", {
+      method: "POST",
+      body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+      const url = `${window.location.origin}/uploads/${data.filename}`;
+      document.getElementById("downloadLink").href = url;
+      document.getElementById("downloadLink").textContent = url;
+
+      const qrcodeDiv = document.getElementById("qrcode");
+      qrcodeDiv.innerHTML = "";
+      new QRCode(qrcodeDiv, url);
+
+      document.getElementById("result").style.display = "block";
+    })
+    .catch(err => alert("Upload failed: " + err));
+  }
+
+  document.getElementById("uploadForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    fetch("/upload", {
+      method: "POST",
+      body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+      const url = `${window.location.origin}/uploads/${data.filename}`;
+      document.getElementById("uploadStatus").innerText = `✅ Sent: ${data.filename}`;
+      e.target.reset();
+
+      const qrDiv = document.getElementById("phoneQr");
+      qrDiv.innerHTML = "";
+      new QRCode(qrDiv, url);
+
+      const link = document.getElementById("phoneQrLink");
+      link.href = url;
+      link.innerText = url;
+
+      document.getElementById("phoneQrContainer").style.display = "block";
+    })
+    .catch(err => {
+      document.getElementById("uploadStatus").innerText = "❌ Upload failed.";
+    });
+  });
+
+  // Update title on mobile
+  function adjustHeadingForMobile() {
+    const isMobile = window.innerWidth <= 768;
+    const heading = document.getElementById("PhoneHeading");
+    if (heading && isMobile) {
+      heading.textContent = "📤 Send File to Laptop";
+    } else {
+      heading.textContent = "📥 Receive File from Phone";
+    }
+  }
+
+  window.addEventListener("load", adjustHeadingForMobile);
+  window.addEventListener("resize", adjustHeadingForMobile);
+</script>
+
+</body>
+</html>
