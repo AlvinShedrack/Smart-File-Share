@@ -1,26 +1,4 @@
-# app.py
-# Single-file app: runs a server, serves the page, accepts multiple files,
-# zips them into a single bundle, and returns a QR link that downloads all.
-# Usage:
-#   pip install Flask
-#   python app.py
-# Then open http://<your-lan-ip>:5000  (QR will use window.location.origin)
-
-import os, uuid, datetime
-from zipfile import ZipFile, ZIP_DEFLATED
-from flask import Flask, request, jsonify, send_from_directory, render_template_string
-
-APP_PORT = 5000
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-UPLOADS_DIR = os.path.join(MEDIA_ROOT, "uploads")
-BUNDLES_DIR = os.path.join(MEDIA_ROOT, "bundles")
-os.makedirs(UPLOADS_DIR, exist_ok=True)
-os.makedirs(BUNDLES_DIR, exist_ok=True)
-
-app = Flask(__name__, static_url_path="/media", static_folder=MEDIA_ROOT)
-
-PAGE = r"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -75,15 +53,18 @@ PAGE = r"""<!DOCTYPE html>
 
   <!-- Laptop to Phone -->
   <div class="card" id="laptopCard">
-    <h2>📤 Send Files to Phone</h2>
+    <h2>📤 Send File to Phone</h2>
+    <!-- Enable multiple -->
     <input type="file" id="fileInput" multiple />
-    <button class="upload-btn laptop-btn" onclick="uploadFilesFromLaptop()">Upload & Generate Bundle QR</button>
+    <button class="upload-btn laptop-btn" onclick="uploadFilesFromLaptop()">Upload & Generate QR</button>
+
+    <!-- Results: multiple files -->
     <div id="laptopResults" class="result-list" style="display:none;"></div>
   </div>
 
   <!-- Phone to Laptop -->
   <div class="card" id="PhoneCard">
-    <h2 id="PhoneHeading">📥 Receive Files from Phone</h2>
+    <h2 id="PhoneHeading">📥 Receive File from Phone</h2>
 
     <div class="qrcode-container desktop-only">
       <div style="text-align:center;">
@@ -94,12 +75,15 @@ PAGE = r"""<!DOCTYPE html>
 
     <form id="uploadForm" enctype="multipart/form-data">
       <div class="mobile-only">
+        <!-- Keep the field name "file" for compatibility; allow multiple -->
         <input type="file" name="file" multiple required />
         <button type="submit">Upload to Laptop</button>
       </div>
     </form>
 
     <p id="uploadStatus"></p>
+
+    <!-- Results: multiple files from phone -->
     <div id="phoneResults" class="result-list" style="display:none;"></div>
   </div>
 </div>
@@ -115,15 +99,10 @@ PAGE = r"""<!DOCTYPE html>
     document.getElementById(sectionId).classList.add("visible");
   }
 
-  // Generate initial QR for this page origin
-  function setInitialQr(){
-    const origin = window.location.origin;
-    const el = document.getElementById("initialQr");
-    el.innerHTML = "";
-    new QRCode(el, origin);
-  }
-  setInitialQr();
+  // Generate initial QR for the page
+  new QRCode(document.getElementById("initialQr"), "http://192.168.100.140:5000/");
 
+  /** UTIL: Normalize server response into an array of { filename } */
   function normalizeFilesResponse(data){
     if (Array.isArray(data)) return data;
     if (data && Array.isArray(data.files)) return data.files;
@@ -131,32 +110,32 @@ PAGE = r"""<!DOCTYPE html>
     return [];
   }
 
-  function renderBundleCard(container, bundleUrl, bundleName){
-    container.innerHTML = "";
-    container.style.display = "grid";
-    const card = document.createElement("div");
-    card.className = "result-card";
+  /** UTIL: Render a card with QR + link for a file URL into container */
+  function renderFileCard(container, url, filename){
+    const card = document.createElement('div');
+    card.className = 'result-card';
 
-    const title = document.createElement("p");
-    title.textContent = bundleName || "All files (.zip)";
+    const title = document.createElement('p');
+    title.textContent = filename || url;
 
-    const qrWrap = document.createElement("div");
-    qrWrap.className = "qrcode-container";
-
-    const link = document.createElement("a");
-    link.href = bundleUrl; link.target = "_blank"; link.rel = "noopener";
-    link.textContent = bundleUrl;
-
-    const qrDiv = document.createElement("div");
-    qrWrap.appendChild(qrDiv);
-    new QRCode(qrDiv, bundleUrl);
+    const qrWrap = document.createElement('div');
+    qrWrap.className = 'qrcode-container';
+    const link = document.createElement('a');
+    link.href = url; link.target = '_blank'; link.rel = 'noopener';
+    link.textContent = url;
 
     card.appendChild(title);
     card.appendChild(qrWrap);
     card.appendChild(link);
     container.appendChild(card);
+
+    // Generate QR
+    const qrDiv = document.createElement('div');
+    qrWrap.appendChild(qrDiv);
+    new QRCode(qrDiv, url);
   }
 
+  /** Laptop → Phone: upload multiple files */
   async function uploadFilesFromLaptop(){
     const input = document.getElementById("fileInput");
     const files = input.files;
@@ -164,7 +143,9 @@ PAGE = r"""<!DOCTYPE html>
       alert("Please choose at least one file");
       return;
     }
+
     const formData = new FormData();
+    // Append each file using the same field name "file" (server should use getlist('file'))
     Array.from(files).forEach(f => formData.append("file", f));
 
     try{
@@ -172,62 +153,64 @@ PAGE = r"""<!DOCTYPE html>
       if (!res.ok) throw new Error(`Upload failed (${res.status})`);
       const data = await res.json();
 
+      const list = normalizeFilesResponse(data);
       const resultsEl = document.getElementById("laptopResults");
-      if (data.bundle && data.bundle.url){
-        renderBundleCard(resultsEl, data.bundle.url, data.bundle.filename);
-      } else {
-        const list = normalizeFilesResponse(data);
-        const fname = list[0]?.filename ?? "file";
-        const url = `${window.location.origin}/media/uploads/${fname}`;
-        renderBundleCard(resultsEl, url, fname);
-      }
+      resultsEl.innerHTML = "";
+      resultsEl.style.display = "grid";
+
+      list.forEach(item => {
+        const fname = item.filename || item.name || "file";
+        const url = `${window.location.origin}/uploads/${fname}`;
+        renderFileCard(resultsEl, url, fname);
+      });
     }catch(err){
       alert("Upload failed: " + err);
     }
   }
 
-  document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+  /** Phone → Laptop: upload multiple from phone form */
+  document.getElementById("uploadForm").addEventListener("submit", async function(e){
     e.preventDefault();
     const statusEl = document.getElementById("uploadStatus");
     statusEl.innerText = "Uploading...";
 
     try{
+      // Note: FormData(form) automatically includes all selected files for inputs named "file"
       const formData = new FormData(e.target);
       const res = await fetch("/upload", { method: "POST", body: formData });
       if (!res.ok) throw new Error(`Upload failed (${res.status})`);
       const data = await res.json();
 
       const list = normalizeFilesResponse(data);
-      if (!list.length){
+      if (list.length === 0){
         statusEl.innerText = "No files returned by server.";
         return;
       }
 
-      statusEl.innerText = list.length > 1
-        ? `✅ Sent ${list.length} files.`
-        : `✅ Sent: ${list[0].filename}`;
-
+      statusEl.innerText = `✅ Sent ${list.length} file(s).`;
       e.target.reset();
 
       const resultsEl = document.getElementById("phoneResults");
-      if (data.bundle && data.bundle.url){
-        renderBundleCard(resultsEl, data.bundle.url, data.bundle.filename);
-      } else {
-        const fname = list[0].filename;
-        const url = `${window.location.origin}/media/uploads/${fname}`;
-        renderBundleCard(resultsEl, url, fname);
-      }
+      resultsEl.innerHTML = "";
+      resultsEl.style.display = "grid";
+
+      list.forEach(item => {
+        const fname = item.filename || item.name || "file";
+        const url = `${window.location.origin}/uploads/${fname}`;
+        renderFileCard(resultsEl, url, fname);
+      });
     }catch(err){
       console.error(err);
       statusEl.innerText = "❌ Upload failed.";
     }
   });
 
+  // Update title on mobile
   function adjustHeadingForMobile(){
     const isMobile = window.innerWidth <= 768;
     const heading = document.getElementById("PhoneHeading");
     if (!heading) return;
-    heading.textContent = isMobile ? "📤 Send Files to Laptop" : "📥 Receive Files from Phone";
+    heading.textContent = isMobile ? "📤 Send File to Laptop" : "📥 Receive File from Phone";
   }
   window.addEventListener("load", adjustHeadingForMobile);
   window.addEventListener("resize", adjustHeadingForMobile);
@@ -235,58 +218,3 @@ PAGE = r"""<!DOCTYPE html>
 
 </body>
 </html>
-"""
-
-def _zip_files(saved_paths):
-    """Create a zip in BUNDLES_DIR and return (bundle_rel_path, download_name)."""
-    bundle_id = uuid.uuid4().hex
-    ts = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-    download_name = f"share-{ts}.zip"
-    bundle_rel = os.path.join("bundles", f"{bundle_id}.zip")
-    bundle_abs = os.path.join(MEDIA_ROOT, bundle_rel)
-    with ZipFile(bundle_abs, mode="w", compression=ZIP_DEFLATED) as zf:
-        for abs_path, original_name in saved_paths:
-            zf.write(abs_path, arcname=original_name)
-    return bundle_rel.replace("\\", "/"), download_name
-
-@app.route("/", methods=["GET"])
-def index():
-    return render_template_string(PAGE)
-
-@app.route("/upload", methods=["POST"])
-def upload():
-    """
-    Accept multiple input fields named 'file'.
-    Save to media/uploads/<original>, zip them into media/bundles/<uuid>.zip,
-    and return JSON with a single bundle URL that downloads all files.
-    """
-    files = request.files.getlist("file")
-    if not files:
-        return jsonify({"error": "no files"}), 400
-
-    saved = []
-    for f in files:
-        original = f.filename or "file"
-        # handle name collisions by prefixing a short uuid
-        base, ext = os.path.splitext(original)
-        safe_name = f"{base}_{uuid.uuid4().hex[:6]}{ext}" if os.path.exists(os.path.join(UPLOADS_DIR, original)) else original
-        abs_path = os.path.join(UPLOADS_DIR, safe_name)
-        f.save(abs_path)
-        saved.append((abs_path, original))  # store original name inside zip
-
-    bundle_rel, download_name = _zip_files(saved)
-    bundle_url = f"/media/{bundle_rel}"
-
-    return jsonify({
-        "files": [{"filename": os.path.basename(p)} for p, _ in saved],
-        "bundle": {"url": bundle_url, "filename": download_name}
-    })
-
-@app.route("/media/<path:filename>")
-def media(filename):
-    # Serve uploaded files and bundles
-    return send_from_directory(MEDIA_ROOT, filename, as_attachment=False)
-
-if __name__ == "__main__":
-    # 0.0.0.0 to be reachable on LAN; open http://<your-lan-ip>:5000
-    app.run(host="0.0.0.0", port=APP_PORT, debug=True)
