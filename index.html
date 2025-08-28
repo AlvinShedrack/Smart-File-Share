@@ -6,35 +6,141 @@
   <title>📡 Smart File Share</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
   <style>
-    body{margin:0;padding:0;font-family:"Segoe UI",sans-serif;background:#000;color:#333}
-    header{text-align:center;padding:2rem 1rem 1rem}
-    footer{text-align:center;margin:20px 0;font-size:.9rem;color:#e5ff00;margin-top:20px}
-    header h1{font-size:2rem;margin:0;color:#0077cc}
-    .container{max-width:700px;margin:auto;padding:1rem}
-    .card{background:#fff;border-radius:30px;box-shadow:0 14px 20px rgb(226 55 55);padding:2rem;margin-top:1rem;display:none;transition:all .3s ease-in-out}
-    .card.visible{display:block}
-    .toggle-buttons{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:1rem}
-    .toggle-buttons button{padding:12px 20px;font-size:1rem;background:#0077cc;color:#fff;border:none;border-radius:8px;cursor:pointer;transition:background .2s}
-    .toggle-buttons button:hover{background:#005fa3}
-    .card h2{margin-top:0;color:#0077cc;text-align:center}
-    input[type="file"]{margin:1rem 0;padding:.8rem;width:100%;border:1px solid #ccc;border-radius:8px;background:#f9f9f9}
-    button[type="submit"],.upload-btn{width:100%;background:#28a745;color:#fff;border:none;padding:.9rem;font-size:1rem;border-radius:8px;margin-top:.5rem;cursor:pointer;transition:background .2s}
-    button:hover{background:#1e7e34}
-    .qrcode-container{margin-top:1rem;display:flex;flex-direction:column;align-items:center;justify-content:center}
-    .qrcode-container a{display:inline-block;margin-top:.5rem;color:#0077cc;word-break:break-word;text-align:center}
-    #uploadStatus{margin-top:1rem;font-weight:bold;text-align:center}
-    .desktop-only{display:block}
-    .mobile-only{display:none}
-    .laptop-btn{display:inline-block}
-    .result-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
-    .result-card{border:1px solid #e5e5e5;border-radius:12px;padding:12px}
-    .result-card p{margin:.25rem 0 .5rem;font-weight:600;text-align:center}
-    @media (max-width: 768px){
-      .desktop-only{display:none}
-      .mobile-only{display:block}
-      .toggle-buttons{flex-direction:column;align-items:stretch}
-      .toggle-buttons button{width:100%}
-      .laptop-btn{display:none}
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: rgb(0, 0, 0);
+      color: #333;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+    }
+        footer {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 0.9rem;
+      color: #e5ff00;
+      margin-top: 20px;
+    }
+    header h1 {
+      font-size: 2rem;
+      margin: 0;
+      color: #0077cc;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 1rem;
+      
+      
+    }
+    .card {
+      background: rgb(255, 255, 255);
+      border-radius: 30px;
+      box-shadow: 0 14px 20px rgb(226, 55, 55);
+      padding: 2rem;
+      margin-top: 1rem;
+      display: none;
+      transition: all 0.3s ease-in-out;
+    }
+    .card.visible {
+      display: block;
+    }
+    .toggle-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .toggle-buttons button {
+      padding: 12px 20px;
+      font-size: 1rem;
+      background: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+    }
+    .toggle-buttons button:hover {
+      background: #005fa3;
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #0077cc;
+      text-align: center;
+    }
+    input[type="file"] {
+      margin: 1rem 0;
+      padding: 0.8rem;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+    button[type="submit"], .upload-btn {
+      width: 100%;
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 0.9rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+    }
+    button:hover {
+      background: #1e7e34;
+    }
+    .qrcode-container {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .qrcode-container a {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: #0077cc;
+      word-break: break-word;
+      text-align: center;
+    }
+    #uploadStatus {
+      margin-top: 1rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    .desktop-only {
+      display: block;
+    }
+    .mobile-only {
+      display: none;
+    }
+    .laptop-btn {
+      display: inline-block;
+    }
+    @media (max-width: 768px) {
+      .desktop-only {
+        display: none;
+      }
+      .mobile-only {
+        display: block;
+      }
+      .toggle-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .toggle-buttons button {
+        width: 100%;
+      }
+      .laptop-btn {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -42,7 +148,7 @@
 
 <header>
   <h1>📡 Smart File Share</h1>
-  <p style="color:#00ff15;font-size:1rem;">Seamless transfers between your Laptop and Phone</p>
+  <p style="color: #00ff15; font-size: 1rem;">Seamless transfers between your Laptop and Phone</p>
 </header>
 
 <div class="container">
@@ -54,164 +160,129 @@
   <!-- Laptop to Phone -->
   <div class="card" id="laptopCard">
     <h2>📤 Send File to Phone</h2>
-    <!-- Enable multiple -->
-    <input type="file" id="fileInput" multiple />
-    <button class="upload-btn laptop-btn" onclick="uploadFilesFromLaptop()">Upload & Generate QR</button>
+    <input type="file" id="fileInput" />
+    <button class="upload-btn laptop-btn" onclick="uploadFile()">Upload & Generate QR</button>
 
-    <!-- Results: multiple files -->
-    <div id="laptopResults" class="result-list" style="display:none;"></div>
+    <div id="result" style="display: none;">
+      <div class="qrcode-container">
+        <p>Scan this QR code on your Phone:</p>
+        <div id="qrcode" class="desktop-only"></div>
+        <a id="downloadLink" target="_blank"></a>
+      </div>
+    </div>
   </div>
 
   <!-- Phone to Laptop -->
   <div class="card" id="PhoneCard">
     <h2 id="PhoneHeading">📥 Receive File from Phone</h2>
 
-    <div class="qrcode-container desktop-only">
-      <div style="text-align:center;">
-        <p>Scan on Phone to open this page:</p>
-        <div id="initialQr" style="display:inline-block;"></div>
-      </div>
-    </div>
+<div class="qrcode-container desktop-only">
+
+  <div style="text-align: center;">
+      <p>Scan on Phone to open this page:</p>
+      <div id="initialQr" style="display: inline-block;"></div>
+  </div>
+</div>
+
 
     <form id="uploadForm" enctype="multipart/form-data">
       <div class="mobile-only">
-        <!-- Keep the field name "file" for compatibility; allow multiple -->
-        <input type="file" name="file" multiple required />
+        <input type="file" name="file" required />
         <button type="submit">Upload to Laptop</button>
       </div>
     </form>
 
     <p id="uploadStatus"></p>
 
-    <!-- Results: multiple files from phone -->
-    <div id="phoneResults" class="result-list" style="display:none;"></div>
+    <div id="phoneQrContainer" style="display: none;">
+      <div class="qrcode-container desktop-only">
+        <p>QR for uploaded file:</p>
+        <div id="phoneQr"></div>
+        <a id="phoneQrLink" target="_blank"></a>
+      </div>
+    </div>
   </div>
 </div>
-
 <footer>
-  Created by <strong>Alvin Shedrack</strong> © 2025
-</footer>
-
+    Created by <strong>Alvin Shedrack</strong> © 2025
+  </footer>
 <script>
-  function toggleSection(sectionId){
+  function toggleSection(sectionId) {
     document.getElementById("laptopCard").classList.remove("visible");
     document.getElementById("PhoneCard").classList.remove("visible");
     document.getElementById(sectionId).classList.add("visible");
   }
 
-  // Generate initial QR for the page
+  // Generate initial QR code
   new QRCode(document.getElementById("initialQr"), "http://192.168.100.140:5000/");
 
-  /** UTIL: Normalize server response into an array of { filename } */
-  function normalizeFilesResponse(data){
-    if (Array.isArray(data)) return data;
-    if (data && Array.isArray(data.files)) return data.files;
-    if (data && data.filename) return [{ filename: data.filename }];
-    return [];
-  }
-
-  /** UTIL: Render a card with QR + link for a file URL into container */
-  function renderFileCard(container, url, filename){
-    const card = document.createElement('div');
-    card.className = 'result-card';
-
-    const title = document.createElement('p');
-    title.textContent = filename || url;
-
-    const qrWrap = document.createElement('div');
-    qrWrap.className = 'qrcode-container';
-    const link = document.createElement('a');
-    link.href = url; link.target = '_blank'; link.rel = 'noopener';
-    link.textContent = url;
-
-    card.appendChild(title);
-    card.appendChild(qrWrap);
-    card.appendChild(link);
-    container.appendChild(card);
-
-    // Generate QR
-    const qrDiv = document.createElement('div');
-    qrWrap.appendChild(qrDiv);
-    new QRCode(qrDiv, url);
-  }
-
-  /** Laptop → Phone: upload multiple files */
-  async function uploadFilesFromLaptop(){
-    const input = document.getElementById("fileInput");
-    const files = input.files;
-    if (!files || files.length === 0){
-      alert("Please choose at least one file");
-      return;
-    }
+  function uploadFile() {
+    const fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+    if (!file) return alert("Please choose a file");
 
     const formData = new FormData();
-    // Append each file using the same field name "file" (server should use getlist('file'))
-    Array.from(files).forEach(f => formData.append("file", f));
+    formData.append("file", file);
 
-    try{
-      const res = await fetch("/upload", { method: "POST", body: formData });
-      if (!res.ok) throw new Error(`Upload failed (${res.status})`);
-      const data = await res.json();
+    fetch("/upload", {
+      method: "POST",
+      body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+      const url = `${window.location.origin}/uploads/${data.filename}`;
+      document.getElementById("downloadLink").href = url;
+      document.getElementById("downloadLink").textContent = url;
 
-      const list = normalizeFilesResponse(data);
-      const resultsEl = document.getElementById("laptopResults");
-      resultsEl.innerHTML = "";
-      resultsEl.style.display = "grid";
+      const qrcodeDiv = document.getElementById("qrcode");
+      qrcodeDiv.innerHTML = "";
+      new QRCode(qrcodeDiv, url);
 
-      list.forEach(item => {
-        const fname = item.filename || item.name || "file";
-        const url = `${window.location.origin}/uploads/${fname}`;
-        renderFileCard(resultsEl, url, fname);
-      });
-    }catch(err){
-      alert("Upload failed: " + err);
-    }
+      document.getElementById("result").style.display = "block";
+    })
+    .catch(err => alert("Upload failed: " + err));
   }
 
-  /** Phone → Laptop: upload multiple from phone form */
-  document.getElementById("uploadForm").addEventListener("submit", async function(e){
+  document.getElementById("uploadForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    const statusEl = document.getElementById("uploadStatus");
-    statusEl.innerText = "Uploading...";
+    const formData = new FormData(e.target);
 
-    try{
-      // Note: FormData(form) automatically includes all selected files for inputs named "file"
-      const formData = new FormData(e.target);
-      const res = await fetch("/upload", { method: "POST", body: formData });
-      if (!res.ok) throw new Error(`Upload failed (${res.status})`);
-      const data = await res.json();
-
-      const list = normalizeFilesResponse(data);
-      if (list.length === 0){
-        statusEl.innerText = "No files returned by server.";
-        return;
-      }
-
-      statusEl.innerText = `✅ Sent ${list.length} file(s).`;
+    fetch("/upload", {
+      method: "POST",
+      body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+      const url = `${window.location.origin}/uploads/${data.filename}`;
+      document.getElementById("uploadStatus").innerText = `✅ Sent: ${data.filename}`;
       e.target.reset();
 
-      const resultsEl = document.getElementById("phoneResults");
-      resultsEl.innerHTML = "";
-      resultsEl.style.display = "grid";
+      const qrDiv = document.getElementById("phoneQr");
+      qrDiv.innerHTML = "";
+      new QRCode(qrDiv, url);
 
-      list.forEach(item => {
-        const fname = item.filename || item.name || "file";
-        const url = `${window.location.origin}/uploads/${fname}`;
-        renderFileCard(resultsEl, url, fname);
-      });
-    }catch(err){
-      console.error(err);
-      statusEl.innerText = "❌ Upload failed.";
-    }
+      const link = document.getElementById("phoneQrLink");
+      link.href = url;
+      link.innerText = url;
+
+      document.getElementById("phoneQrContainer").style.display = "block";
+    })
+    .catch(err => {
+      document.getElementById("uploadStatus").innerText = "❌ Upload failed.";
+    });
   });
 
   // Update title on mobile
-  function adjustHeadingForMobile(){
+  function adjustHeadingForMobile() {
     const isMobile = window.innerWidth <= 768;
     const heading = document.getElementById("PhoneHeading");
-    if (!heading) return;
-    heading.textContent = isMobile ? "📤 Send File to Laptop" : "📥 Receive File from Phone";
+    if (heading && isMobile) {
+      heading.textContent = "📤 Send File to Laptop";
+    } else {
+      heading.textContent = "📥 Receive File from Phone";
+    }
   }
+
   window.addEventListener("load", adjustHeadingForMobile);
   window.addEventListener("resize", adjustHeadingForMobile);
 </script>
